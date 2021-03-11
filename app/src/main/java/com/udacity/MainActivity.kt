@@ -23,6 +23,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pendingIntent: PendingIntent
     private lateinit var action: NotificationCompat.Action
 
+    private var downloading = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -33,11 +35,25 @@ class MainActivity : AppCompatActivity() {
         custom_button.setOnClickListener {
             download()
         }
+
+        custom_button.setCompletedListener {
+            downloadAnimationFinished()
+        }
     }
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
+                downloading = false
+                custom_button.setFinished()
+            }
             val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+        }
+    }
+
+    private fun downloadAnimationFinished() {
+        if (downloading) {
+            custom_button.resetLoading()
         }
     }
 
@@ -53,6 +69,8 @@ class MainActivity : AppCompatActivity() {
         val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
         downloadID =
             downloadManager.enqueue(request)// enqueue puts the download request in the queue.
+        downloading = true
+        custom_button.setLoading()
     }
 
     companion object {
