@@ -14,4 +14,5 @@
     <string name="glide">Glide</string>
     <string name="project">Advanced Android Programming Project Starter</string>
     <string name="retrofit">Retrofit</string>
+    <string name="download_channel_id">download_channel</string>
 </resources>
