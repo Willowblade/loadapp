@@ -84,7 +84,17 @@ class LoadingButton @JvmOverloads constructor(
         }
         if (new == ButtonState.Completed) {
             if (valueAnimator.isRunning) {
-                valueAnimator.cancel()
+                valueAnimator.pause()
+                valueAnimator = ValueAnimator.ofFloat(loadingProgress, 1.0f).apply {
+                    duration = 300
+                    interpolator = LinearInterpolator()
+                    addUpdateListener {
+                        loadingProgress = it.animatedValue as Float
+                        invalidate()
+                    }
+                }
+                valueAnimator.start()
+//                valueAnimator.cancel()
             }
             invalidate()
         }
@@ -120,7 +130,7 @@ class LoadingButton @JvmOverloads constructor(
         super.onDraw(canvas)
         paint.color = buttonBackgroundColor
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
-        if (buttonState == ButtonState.Loading) {
+        if (valueAnimator.isRunning) {
             paint.color = buttonLoadingColor
             canvas.drawRect(0f, 0f, loadingProgress * width, height.toFloat(), paint)
             paint.color = textColor

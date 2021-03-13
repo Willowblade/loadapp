@@ -11,6 +11,7 @@ import android.content.IntentFilter
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -20,6 +21,7 @@ import kotlinx.android.synthetic.main.content_main.*
 
 class MainActivity : AppCompatActivity() {
 
+    private var isRunning: Boolean = false;
     private var downloadID: Long = 0
 
     private lateinit var notificationManager: NotificationManager
@@ -39,7 +41,13 @@ class MainActivity : AppCompatActivity() {
         createChannel(getString(R.string.download_channel_id), "Download")
         custom_button.setOnClickListener {
             if (downloading == null) {
-                download()
+                if (!isRadioSelected()) {
+                    val toast = Toast.makeText(applicationContext, "Please select an option before pressing download", Toast.LENGTH_SHORT)
+                    toast.show()
+                    return@setOnClickListener
+                } else {
+                    download()
+                }
             }
         }
 
@@ -51,13 +59,22 @@ class MainActivity : AppCompatActivity() {
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             println("Received intent $intent")
+            println("Is running? $isRunning")
             if (intent?.action == DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
-                val query = downloadManager.query(DownloadManager.Query())
-                if (query != null) {
-                    val status = query.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                val query = DownloadManager.Query()
+                query.setFilterByStatus(DownloadManager.STATUS_FAILED or DownloadManager.STATUS_PAUSED or DownloadManager.STATUS_SUCCESSFUL or
+                        DownloadManager.STATUS_RUNNING or DownloadManager.STATUS_PENDING)
+                val cursor = downloadManager.query(query)
+                println("Cursor $cursor")
+                var success = false;
+                if (cursor != null) {
+                    cursor.moveToFirst()
+                    val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                    val status = cursor.getInt(statusIndex.toInt())
+
                     if (status == DownloadManager.STATUS_SUCCESSFUL) {
                         println("Successful download!")
-
+                        success = true;
                     } else if (status == DownloadManager.STATUS_FAILED) {
                         println("Failed download!")
                     }
@@ -65,7 +82,11 @@ class MainActivity : AppCompatActivity() {
                 println("Downloaded! $downloading")
                 custom_button.setFinished()
                 val notificationManager = ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
-                notificationManager.sendDownloadedNotification(downloading!!.toString(), applicationContext)
+                var downloadName: String = getDownloadName()
+                if (downloading != null) {
+                    downloadName = downloading!!
+                }
+                notificationManager.sendDownloadedNotification(downloadName, success, applicationContext)
                 downloading = null
             }
         }
@@ -89,8 +110,17 @@ class MainActivity : AppCompatActivity() {
         downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
         downloadID =
             downloadManager.enqueue(request)// enqueue puts the download request in the queue.
-        downloading = getName()
+        downloading = getDownloadName()
         custom_button.setLoading()
+    }
+
+    private fun isRadioSelected(): Boolean {
+        return when(download_options.checkedRadioButtonId) {
+            glide.id -> true
+            project.id -> true
+            retrofit.id -> true
+            else -> false
+        }
     }
 
     private fun getUrl(): String {
@@ -102,7 +132,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getName(): String {
+    private fun getDownloadName(): String {
         return when(download_options.checkedRadioButtonId) {
             glide.id -> "Glide"
             project.id -> "Android AppLoader starter"
@@ -129,6 +159,17 @@ class MainActivity : AppCompatActivity() {
         // TODO: Step 1.6 END create a channel
 
     }
+
+    override fun onResume() {
+        super.onResume()
+        isRunning = true
+    }
+
+    override fun onPause() {
+        super.onPause()
+        isRunning = false
+    }
+
 
     companion object {
         private const val GLIDE_URL = "https://github.com/bumptech/glide/archive/master.zip"
