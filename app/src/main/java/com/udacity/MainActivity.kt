@@ -59,7 +59,6 @@ class MainActivity : AppCompatActivity() {
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             println("Received intent $intent")
-            println("Is running? $isRunning")
             if (intent?.action == DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
                 val query = DownloadManager.Query()
                 query.setFilterByStatus(DownloadManager.STATUS_FAILED or DownloadManager.STATUS_PAUSED or DownloadManager.STATUS_SUCCESSFUL or
@@ -87,6 +86,10 @@ class MainActivity : AppCompatActivity() {
                     downloadName = downloading!!
                 }
                 notificationManager.sendDownloadedNotification(downloadName, success, applicationContext)
+                if (isRunning) {
+                    val toast = Toast.makeText(applicationContext, "Your download of $downloadName is finished!", Toast.LENGTH_SHORT)
+                    toast.show()
+                }
                 downloading = null
             }
         }
