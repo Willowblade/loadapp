@@ -16,8 +16,8 @@ private val FLAGS = 0
 data class DownloadDetails(val filename: String, val success: Boolean) : Parcelable
 
 fun NotificationManager.sendDownloadedNotification(messageBody: String, success: Boolean, applicationContext: Context) {
-    val contentIntent = Intent(applicationContext, MainActivity::class.java)
-
+    val contentIntent = Intent(applicationContext, DetailActivity::class.java)
+    contentIntent.putExtra("details", DownloadDetails(messageBody, success))
     val contentPendingIntent = PendingIntent.getActivity(applicationContext, NOTIFICATION_ID, contentIntent, PendingIntent.FLAG_UPDATE_CURRENT)
 
     val goToDetailsIntent = Intent(applicationContext, DetailActivity::class.java)

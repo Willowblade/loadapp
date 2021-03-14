@@ -37,6 +37,10 @@ class DetailActivity : AppCompatActivity() {
         val notificationManager = ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
         notificationManager.cancelAll()
 
+        back_button.setOnClickListener {
+            onBackPressed()
+        }
+
         setSupportActionBar(toolbar)
     }
 }

@@ -25,8 +25,6 @@ class MainActivity : AppCompatActivity() {
     private var downloadID: Long = 0
 
     private lateinit var notificationManager: NotificationManager
-    private lateinit var pendingIntent: PendingIntent
-    private lateinit var action: NotificationCompat.Action
     private lateinit var downloadManager: DownloadManager
 
     private var downloading: String? = null
@@ -37,6 +35,9 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+
+        downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        notificationManager = ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
 
         createChannel(getString(R.string.download_channel_id), "Download")
         custom_button.setOnClickListener {
@@ -69,7 +70,7 @@ class MainActivity : AppCompatActivity() {
                 if (cursor != null) {
                     cursor.moveToFirst()
                     val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
-                    val status = cursor.getInt(statusIndex.toInt())
+                    val status = cursor.getInt(statusIndex)
 
                     if (status == DownloadManager.STATUS_SUCCESSFUL) {
                         println("Successful download!")
@@ -80,7 +81,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 println("Downloaded! $downloading")
                 custom_button.setFinished()
-                val notificationManager = ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
                 var downloadName: String = getDownloadName()
                 if (downloading != null) {
                     downloadName = downloading!!
@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
                 .setAllowedOverMetered(true)
                 .setAllowedOverRoaming(true)
 
-        downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+
         downloadID =
             downloadManager.enqueue(request)// enqueue puts the download request in the queue.
         downloading = getDownloadName()
